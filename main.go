@@ -12,8 +12,10 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joewalnes/websocketd/libwebsocketd"
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 func logfunc(l *libwebsocketd.LogScope, level libwebsocketd.LogLevel, levelName string, category string, msg string, args ...interface{}) {
@@ -50,6 +52,8 @@ func main() {
 			os.Exit(4)
 		}
 	}
+
+	go serveMetric()
 
 	if runtime.GOOS != "windows" { // windows relies on env variables to find its libs... e.g. socket stuff
 		os.Clearenv() // it's ok to wipe it clean, we already read env variables from passenv into config
@@ -113,5 +117,13 @@ func main() {
 	case err := <-rejects:
 		log.Fatal("server", "Can't start server: %s", err)
 		os.Exit(3)
+	}
+}
+
+func serveMetric() {
+	c := metrics.GetOrRegisterCounter("websocket.connection.number", nil)
+	for {
+		fmt.Println(c.Count())
+		time.Sleep(5 * time.Second)
 	}
 }

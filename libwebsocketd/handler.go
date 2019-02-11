@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	metrics "github.com/rcrowley/go-metrics"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -59,7 +61,9 @@ func NewWebsocketdHandler(s *WebsocketdServer, req *http.Request, log *LogScope)
 
 func (wsh *WebsocketdHandler) accept(ws *websocket.Conn, log *LogScope) {
 	defer ws.Close()
-
+	c := metrics.GetOrRegisterCounter("websocket.connection.number", nil)
+	c.Inc(1)
+	defer c.Dec(1)
 	log.Access("session", "CONNECT")
 	defer log.Access("session", "DISCONNECT")
 
