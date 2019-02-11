@@ -121,8 +121,8 @@ func main() {
 }
 
 func serveMetric() {
-	c := metrics.GetOrRegisterCounter("websocket.connection.number", nil)
 	for {
+		c := metrics.GetOrRegisterCounter("websocket.connection.number", nil)
 		fmt.Println(c.Count())
 		time.Sleep(5 * time.Second)
 	}
