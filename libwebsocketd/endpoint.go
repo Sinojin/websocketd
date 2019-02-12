@@ -5,6 +5,8 @@
 
 package libwebsocketd
 
+import metrics "github.com/rcrowley/go-metrics"
+
 type Endpoint interface {
 	StartReading()
 	Terminate()
@@ -15,6 +17,10 @@ type Endpoint interface {
 func PipeEndpoints(e1, e2 Endpoint) {
 	e1.StartReading()
 	e2.StartReading()
+
+	c := metrics.GetOrRegisterCounter("websocket.connection.number", nil)
+	c.Inc(1)
+	defer c.Dec(1)
 
 	defer e1.Terminate()
 	defer e2.Terminate()

@@ -37,4 +37,9 @@ type Config struct {
 	// created environment
 	Env       []string // Additional environment variables to pass to process ("key=value").
 	ParentEnv []string // Variables kept from os.Environ() before sanitizing it for subprocess.
+
+	//Metric Configs
+	Metric     bool
+	ZabbixHost string
+	ZabbixPort int
 }

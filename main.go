@@ -14,8 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joewalnes/websocketd/libwebsocketd"
+	zabbix "github.com/blacked/go-zabbix"
 	metrics "github.com/rcrowley/go-metrics"
+	"github.com/sinojin/websocketd/libwebsocketd"
 )
 
 func logfunc(l *libwebsocketd.LogScope, level libwebsocketd.LogLevel, levelName string, category string, msg string, args ...interface{}) {
@@ -38,10 +39,13 @@ func logfunc(l *libwebsocketd.LogScope, level libwebsocketd.LogLevel, levelName 
 }
 
 func main() {
+
 	config := parseCommandLine()
 
 	log := libwebsocketd.RootLogScope(config.LogLevel, logfunc)
-
+	if config.Metric {
+		go serveMetric(log, config)
+	}
 	if config.DevConsole {
 		if config.StaticDir != "" {
 			log.Fatal("server", "Invalid parameters: --devconsole cannot be used with --staticdir. Pick one.")
@@ -52,8 +56,6 @@ func main() {
 			os.Exit(4)
 		}
 	}
-
-	go serveMetric()
 
 	if runtime.GOOS != "windows" { // windows relies on env variables to find its libs... e.g. socket stuff
 		os.Clearenv() // it's ok to wipe it clean, we already read env variables from passenv into config
@@ -120,10 +122,19 @@ func main() {
 	}
 }
 
-func serveMetric() {
+func serveMetric(log *libwebsocketd.LogScope, conf *Config) {
 	for {
 		c := metrics.GetOrRegisterCounter("websocket.connection.number", nil)
-		fmt.Println(c.Count())
-		time.Sleep(5 * time.Second)
+		var metrics []*zabbix.Metric
+		metrics = append(metrics, zabbix.NewMetric(os.Getenv("HOSTNAME"), "websocket_connection_number", fmt.Sprintf("%v", c.Count()), time.Now().Unix()))
+		packet := zabbix.NewPacket(metrics)
+		z := zabbix.NewSender(conf.ZabbixHost, conf.ZabbixPort)
+		byteResponse, err := z.Send(packet)
+		if err != nil {
+			log.Error("zabbix", "Error :%v , Response Data : %s", err, byteResponse)
+		} else {
+			log.Info("zabbix", "Metric Sent. Online: %v , Response : %s", c.Count(), byteResponse)
+		}
+		time.Sleep(60 * time.Second)
 	}
 }

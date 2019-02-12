@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joewalnes/websocketd/libwebsocketd"
+	"github.com/sinojin/websocketd/libwebsocketd"
 )
 
 type Config struct {
@@ -74,7 +74,9 @@ func parseCommandLine() *Config {
 	maxForksFlag := flag.Int("maxforks", 0, "Max forks, zero means unlimited")
 	closeMsFlag := flag.Uint("closems", 0, "Time to start sending signals (0 never)")
 	redirPortFlag := flag.Int("redirport", 0, "HTTP port to redirect to canonical --port address")
-
+	metric := flag.Bool("metric", false, "Metric for zabbix (see also --zabbixhost and --zabbixport)")
+	zabbixhost := flag.String("zabbixhost", "", "Metric settings for zabbix (see also --metric)")
+	zabbixport := flag.Int("zabbixport", 0, "Metric settings for zabbix (see also --metric)")
 	// lib config options
 	binaryFlag := flag.Bool("binary", false, "Set websocketd to experimental binary mode (default is line by line)")
 	reverseLookupFlag := flag.Bool("reverselookup", false, "Perform reverse DNS lookups on remote clients")
@@ -175,7 +177,17 @@ func parseCommandLine() *Config {
 			os.Exit(1)
 		}
 	}
+	if *metric {
+		if *zabbixhost == "" || *zabbixport == 0 {
+			fmt.Fprintf(os.Stderr, "Please specify both  --zabbixhost and --zabbixport for metric.\n")
+			os.Exit(1)
+		} else {
+			config.ZabbixHost = *zabbixhost
+			config.ZabbixPort = *zabbixport
+			config.Metric = *metric
+		}
 
+	}
 	mainConfig.CertFile = *sslCert
 	mainConfig.KeyFile = *sslKey
 
@@ -246,7 +258,6 @@ func parseCommandLine() *Config {
 			config.UsingScriptDir = true
 		}
 	}
-
 	if config.CgiDir != "" {
 		if inf, err := os.Stat(config.CgiDir); err != nil || !inf.IsDir() {
 			fmt.Fprintf(os.Stderr, "Your CGI dir '%s' is not pointing to an accessible directory.\n", config.CgiDir)
