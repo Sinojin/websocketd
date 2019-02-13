@@ -77,6 +77,7 @@ func parseCommandLine() *Config {
 	metric := flag.Bool("metric", false, "Metric for zabbix (see also --zabbixhost and --zabbixport)")
 	zabbixhost := flag.String("zabbixhost", "", "Metric settings for zabbix (see also --metric)")
 	zabbixport := flag.Int("zabbixport", 0, "Metric settings for zabbix (see also --metric)")
+	hostname := flag.String("hostname", "", "Hostname")
 	// lib config options
 	binaryFlag := flag.Bool("binary", false, "Set websocketd to experimental binary mode (default is line by line)")
 	reverseLookupFlag := flag.Bool("reverselookup", false, "Perform reverse DNS lookups on remote clients")
@@ -147,6 +148,7 @@ func parseCommandLine() *Config {
 	config.StartupTime = time.Now()
 	config.ServerSoftware = fmt.Sprintf("websocketd/%s", Version())
 	config.HandshakeTimeout = time.Millisecond * 1500 // only default for now
+	config.Hostname = *hostname
 
 	if len(os.Args) == 1 {
 		fmt.Printf("Command line arguments are missing.\n")

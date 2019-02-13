@@ -126,14 +126,14 @@ func serveMetric(log *libwebsocketd.LogScope, conf *Config) {
 	for {
 		c := metrics.GetOrRegisterCounter("websocket.connection.number", nil)
 		var metrics []*zabbix.Metric
-		metrics = append(metrics, zabbix.NewMetric(os.Getenv("HOSTNAME"), "websocket_connection_number", fmt.Sprintf("%v", c.Count()), time.Now().Unix()))
+		metrics = append(metrics, zabbix.NewMetric(conf.Hostname, "websocket_connection_number", fmt.Sprintf("%v", c.Count()), time.Now().Unix()))
 		packet := zabbix.NewPacket(metrics)
 		z := zabbix.NewSender(conf.ZabbixHost, conf.ZabbixPort)
 		byteResponse, err := z.Send(packet)
 		if err != nil {
 			log.Error("zabbix", "Error :%v , Response Data : %s", err, byteResponse)
 		} else {
-			log.Info("zabbix", "Metric Sent. Online: %v , Response : %s", c.Count(), byteResponse)
+			log.Info("zabbix", "Metric Sent. Online: %v , Response : %s ", c.Count(), byteResponse)
 		}
 		time.Sleep(60 * time.Second)
 	}

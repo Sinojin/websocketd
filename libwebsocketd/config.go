@@ -42,4 +42,5 @@ type Config struct {
 	Metric     bool
 	ZabbixHost string
 	ZabbixPort int
+	Hostname   string
 }
